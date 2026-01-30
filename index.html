@@ -15,7 +15,7 @@
       box-shadow:0 2px 8px rgba(0,0,0,.08); position:sticky; top:0; z-index:10;
     }
     header h2{ margin:0; color:var(--primary); display:flex; gap:8px; align-items:center; font-size:18px; }
-    .top-actions{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
+    .top-actions{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     input, select{
       padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:14px; outline:none;
     }
@@ -37,6 +37,11 @@
     .status{ font-size:14px; color:#555; min-width:240px; }
     .status.success{ color:#137333; } .status.error{ color:#b3261e; }
     .pill{ display:inline-flex; gap:8px; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:999px; background:#fff; }
+    .user-pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 10px; border:1px solid var(--border); border-radius:999px;
+      background:#fff; color:#333; font-size:13px;
+    }
   </style>
 </head>
 
@@ -45,6 +50,11 @@
   <h2><i class="bi bi-exclamation-triangle"></i> Não Conformidades</h2>
 
   <div class="top-actions">
+    <span class="user-pill" id="userPill" style="display:none;">
+      <i class="bi bi-person-circle"></i>
+      <span id="userNomeTopo"></span>
+    </span>
+
     <button class="secondary" type="button" onclick="voltarInspecoes()">
       <i class="bi bi-arrow-left"></i> Voltar (Inspeções)
     </button>
@@ -146,7 +156,6 @@
   }
 
   function voltarInspecoes(){
-    // ajuste pra sua URL da página de inspeções
     window.location.href = "https://coec-epb.github.io/geral_colaboradores/";
   }
 
@@ -164,14 +173,38 @@
     }
   }
 
+  // ✅ BLOQUEIO + validação do token no Worker
+  async function garantirLogin() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "https://coec-epb.github.io/login_inspecoes/";
+      return false;
+    }
+
+    // Mostra nome no topo (se existir)
+    const nome = getNomeDoToken();
+    const pill = document.getElementById("userPill");
+    const nomeEl = document.getElementById("userNomeTopo");
+    if (nome && pill && nomeEl) {
+      nomeEl.textContent = nome;
+      pill.style.display = "inline-flex";
+    }
+
+    // Valida token chamando rota protegida
+    const res = await fetch(API + "/gestor-info", { headers: authHeaders() });
+    if (res.status === 401) {
+      logout();
+      return false;
+    }
+    return true;
+  }
+
   function formatarDataBR(s) {
     if (!s) return "-";
-    // tenta yyyy-mm-dd
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
       const [y,m,d] = s.slice(0,10).split("-");
       return `${d}/${m}/${y}`;
     }
-    // se vier dd/mm/yyyy retorna igual
     return String(s);
   }
 
@@ -214,16 +247,9 @@
   }
 
   async function popularGestoresNC() {
-    const perfil = localStorage.getItem("perfil") || "user";
     const box = document.getElementById("boxGestorNC");
     const sel = document.getElementById("filtroGestorNC");
     if (!box || !sel) return;
-
-    // só mostra o select se /lideres estiver liberado pra esse perfil (super/admin)
-    if (perfil !== "admin") {
-      // tenta carregar mesmo assim: se der 403, esconde
-      // (super gestores normalmente não são "admin", então deixamos tentar)
-    }
 
     try {
       const res = await apiFetch("/lideres");
@@ -232,6 +258,12 @@
 
       const data = JSON.parse(text);
       const lista = data.results || [];
+
+      // Se vier lista vazia, esconde filtro
+      if (!lista.length) {
+        box.style.display = "none";
+        return;
+      }
 
       box.style.display = "inline-flex";
       sel.innerHTML = `<option value="">Selecione…</option>` + lista.map(n => `<option value="${n}">${n}</option>`).join("");
@@ -242,8 +274,8 @@
         sel.dataset.meuNome = meuNome;
       }
 
-      // eventos
       document.getElementById("filtroMesNC")?.addEventListener("change", carregarNC);
+
       sel.addEventListener("change", () => {
         const btn = document.getElementById("btnVoltarMinhasNC");
         const meu = (sel.dataset.meuNome || "").toUpperCase();
@@ -301,6 +333,9 @@
   }
 
   (async function init(){
+    const ok = await garantirLogin();
+    if (!ok) return;
+
     // mês vigente
     const now = new Date();
     const mesAtual = now.toISOString().slice(0,7);
