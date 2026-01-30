@@ -201,6 +201,41 @@ button{
 </main>
 
 <script>
+  function normName(s){
+  return String(s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g," ").trim().toUpperCase();
+}
+
+// ✅ gestores DEOP (quem tem meta)
+const META_MENSAL_POR_GESTOR = {
+  "ANDERSON DE ARAUJO VASCONCELOS": 6,
+  "EDEVALDO FELICIANO DA SILVA": 8,
+  "ALEXANDRE BATISTA DIAS": 3,
+  "DAVIDSON DA SILVA GOMES": 5,
+  "THOMAZ CHAVES DO NASCIMENTO": 8,
+  "WESLEY FERNANDES DE SOUZA": 10,
+  "JANSEN LACERDA DE OLIVEIRA JUNIOR": 10,
+  "FABIANO OLIVEIRA DE MENEZES": 5,
+  "CRISTIANO CAETANO MADEIRO": 10,
+  "NATHALIA HOLANDA VILHENA": 4,
+  "EDIVALDO DA SILVA BRANDAO NETO": 8,
+  "RENAN IGOR MENEZES DA SILVA": 0,
+  "MACIEL GOMES DE AGUIAR": 10,
+  "DELMIR BARBOSA MAXIMIANO": 10,
+  "FABIO LIMA DE FRANCA": 10,
+  "YURI VILMAR BATISTA MELO": 10,
+  "MARCONE HENRIQUE DA CRUZ": 10,
+  "RENATO LINS DE VASCONCELOS NETO": 10,
+  "FABRICIO ANDRE SILVA DE ARAUJO": 4,
+  "GERALDO PEDRO DA SILVA JUNIOR": 4,
+  "RICHARDSON SILVA DE OLIVEIRA": 4,
+  "FRANCISCO DE ASSIS PEREIRA JUNIOR": 4,
+  "FERNANDO ALVES PESSOA": 4,
+  "FRANCISCO BATISTA DE LIMA": 4,
+  "GIESY LAMOUNIER DE OLIVEIRA MACIEL": 4,
+  "JORGE LUIS MARQUES DOS SANTOS": 4
+};
   // ✅ ajuste se necessário
   const API = "https://inspecoes.pedro-fillype.workers.dev";
 
@@ -330,55 +365,20 @@ button{
     carregarNC();
   }
 
-  async function popularGestoresNC() {
-    const box = document.getElementById("boxGestorNC");
-    const sel = document.getElementById("filtroGestorNC");
-    if (!box || !sel) return;
+  function popularGestoresNC() {
+  const sel = document.getElementById("filtroGestorNC"); // 👈 TROQUE pro seu ID
+  if (!sel) return;
 
-    try {
-      const res = await apiFetch("/lideres");
-      const text = await res.text();
-      if (!res.ok) throw new Error(text);
+  // Se quiser tirar os que tem meta 0, use o filtro (>0)
+  const listaFinal = Object.keys(META_MENSAL_POR_GESTOR)
+    // .filter(n => Number(META_MENSAL_POR_GESTOR[n] || 0) > 0) // opcional
+    .slice()
+    .sort((a, b) => normName(a).localeCompare(normName(b)));
 
-      const data = JSON.parse(text);
-      const lista = data.results || [];
-
-      // Se vier lista vazia, esconde filtro
-      if (!lista.length) {
-        box.style.display = "none";
-        return;
-      }
-
-      box.style.display = "inline-flex";
-      sel.innerHTML = `<option value="">Selecione…</option>` + lista.map(n => `<option value="${n}">${n}</option>`).join("");
-
-      const meuNome = getNomeDoToken();
-      if (meuNome) {
-        sel.value = meuNome;
-        sel.dataset.meuNome = meuNome;
-      }
-
-      document.getElementById("filtroMesNC")?.addEventListener("change", carregarNC);
-
-      sel.addEventListener("change", () => {
-        const btn = document.getElementById("btnVoltarMinhasNC");
-        const meu = (sel.dataset.meuNome || "").toUpperCase();
-        const atual = (sel.value || "").toUpperCase();
-        if (btn) btn.style.display = atual && atual !== meu ? "inline-flex" : "none";
-        carregarNC();
-      });
-
-      document.getElementById("btnVoltarMinhasNC")?.addEventListener("click", () => {
-        sel.value = sel.dataset.meuNome || "";
-        document.getElementById("btnVoltarMinhasNC").style.display = "none";
-        carregarNC();
-      });
-
-    } catch (e) {
-      // se não puder ver líderes, some com o filtro
-      box.style.display = "none";
-    }
-  }
+  sel.innerHTML =
+    `<option value="">Todos</option>` +
+    listaFinal.map(n => `<option value="${n.replaceAll('"', "&quot;")}">${n}</option>`).join("");
+}
 
   async function carregarNC() {
     try {
