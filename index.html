@@ -285,42 +285,43 @@ button{
   }
 
   function renderTabelaNC(rows) {
-    const tbody = document.getElementById("tbodyNC");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+  const tbody = document.getElementById("tbodyNC");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-    (rows || []).forEach(r => {
-  const tr = document.createElement("tr");
+  (rows || []).forEach(r => {
+    const tr = document.createElement("tr");
 
-  // ⚠️ Marca vermelho se o status for ATRASADO
-  const statusNorm = (r.status || "").trim().toUpperCase();
-  if (statusNorm === "ATRASADO") {
-    tr.classList.add("tr-atrasado");
-  }
+    // ⚠️ Marca vermelho se o status for ATRASADO
+    const statusNorm = (r.status || "").trim().toUpperCase();
+    if (statusNorm === "ATRASADO") {
+      tr.classList.add("tr-atrasado");
+    }
 
-  tr.innerHTML = `
-    <td>${r.numero_plano ?? ""}</td>
-    <td>${r.localidade ?? ""}</td>
-    <td>${r.area ?? ""}</td>
-    <td>${r.equipe_avaliada ?? ""}</td>
-    <td>${r.contratada ?? ""}</td>
-    <td>${r.lider ?? ""}</td>
-    <td>${r.descricao ?? ""}</td>
-    <td>${r.observacao ?? ""}</td>
-    <td>${r.status ?? ""}</td>
-    <td>${r.tipo_area ?? ""}</td>
-    <td>${r.responsavel ?? ""}</td>
-    <td>${r.acao ?? ""}</td>
-    <td>${formatarDataBR(r.inicio)}</td>
-    <td>${formatarDataBR(r.termino)}</td>
-    <td>${formatarDataBR(r.inicio_acao)}</td>
-    <td>${formatarDataBR(r.termino_acao)}</td>
-    <td>${r.justificativa ?? ""}</td>
-    <td>${r.atraso ?? ""}</td>
-  `;
+    tr.innerHTML = `
+      <td>${r.numero_plano ?? ""}</td>
+      <td>${r.localidade ?? ""}</td>
+      <td>${r.area ?? ""}</td>
+      <td>${r.equipe_avaliada ?? ""}</td>
+      <td>${r.contratada ?? ""}</td>
+      <td>${r.lider ?? ""}</td>
+      <td>${r.descricao ?? ""}</td>
+      <td>${r.observacao ?? ""}</td>
+      <td>${r.status ?? ""}</td>
+      <td>${r.tipo_area ?? ""}</td>
+      <td>${r.responsavel ?? ""}</td>
+      <td>${r.acao ?? ""}</td>
+      <td>${formatarDataBR(r.inicio)}</td>
+      <td>${formatarDataBR(r.termino)}</td>
+      <td>${formatarDataBR(r.inicio_acao)}</td>
+      <td>${formatarDataBR(r.termino_acao)}</td>
+      <td>${r.justificativa ?? ""}</td>
+      <td>${r.atraso ?? ""}</td>
+    `;
 
-  tbody.appendChild(tr);
-});
+    tbody.appendChild(tr);
+  });
+}
 
   function limparFiltrosNC(){
     document.getElementById("filtroNumeroPlanoNC").value = "";
