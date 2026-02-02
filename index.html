@@ -420,11 +420,9 @@ const META_MENSAL_POR_GESTOR = {
     const ok = await garantirLogin();
     if (!ok) return;
 
-    // mês vigente
-    const now = new Date();
-    const mesAtual = now.toISOString().slice(0,7);
-    const mesEl = document.getElementById("filtroMesNC");
-    if (mesEl) mesEl.value = mesAtual;
+    // ✅ deixa mês em branco pra não filtrar sem querer
+const mesEl = document.getElementById("filtroMesNC");
+if (mesEl) mesEl.value = "";
 
     await popularGestoresNC();
     await carregarNC();
