@@ -156,8 +156,14 @@ button{
 
   <!-- INPUTS -->
   <input id="filtroNumeroPlanoNC" class="filters-input" type="text" placeholder="Número do plano">
-  <input id="filtroLocalidadeNC" class="filters-input" type="text" placeholder="Localidade">
-  <input id="filtroStatusNC" class="filters-input" type="text" placeholder="Status">
+    
+  <select id="filtroLocalidadeNC" class="filters-input">
+  <option value="">Localidade (todas)</option>
+</select>
+
+<select id="filtroStatusNC" class="filters-input">
+  <option value="">Status (todos)</option>
+</select>
 
   <!-- AÇÕES -->
   <button type="button" onclick="carregarNC()">
@@ -209,32 +215,43 @@ button{
 
 // ✅ gestores DEOP (quem tem meta)
 const META_MENSAL_POR_GESTOR = {
-  "ANDERSON DE ARAUJO VASCONCELOS": 6,
-  "EDEVALDO FELICIANO DA SILVA": 8,
-  "ALEXANDRE BATISTA DIAS": 3,
-  "DAVIDSON DA SILVA GOMES": 5,
-  "THOMAZ CHAVES DO NASCIMENTO": 8,
+  "ANDERSON DE ARAUJO VASCONCELOS": 10,
+  "EDEVALDO FELICIANO DA SILVA": 10,
+  "ALEXANDRE BATISTA DIAS": 10,
+  "DAVIDSON DA SILVA GOMES": 10,
+  "THOMAZ CHAVES DO NASCIMENTO": 10,
   "WESLEY FERNANDES DE SOUZA": 10,
   "JANSEN LACERDA DE OLIVEIRA JUNIOR": 10,
-  "FABIANO OLIVEIRA DE MENEZES": 5,
+  "FABIANO OLIVEIRA DE MENEZES": 8,
   "CRISTIANO CAETANO MADEIRO": 10,
   "NATHALIA HOLANDA VILHENA": 4,
   "EDIVALDO DA SILVA BRANDAO NETO": 8,
-  "RENAN IGOR MENEZES DA SILVA": 0,
+  "RENAN IGOR MENEZES DA SILVA": 8,
   "MACIEL GOMES DE AGUIAR": 10,
   "DELMIR BARBOSA MAXIMIANO": 10,
   "FABIO LIMA DE FRANCA": 10,
   "YURI VILMAR BATISTA MELO": 10,
   "MARCONE HENRIQUE DA CRUZ": 10,
   "RENATO LINS DE VASCONCELOS NETO": 10,
+  "ANTONIO PEREIRA GOMES":8,
   "FABRICIO ANDRE SILVA DE ARAUJO": 4,
+  "WELLINGTTON ANDRADE DE PAIVA": 4,
   "GERALDO PEDRO DA SILVA JUNIOR": 4,
   "RICHARDSON SILVA DE OLIVEIRA": 4,
-  "FRANCISCO DE ASSIS PEREIRA JUNIOR": 4,
-  "FERNANDO ALVES PESSOA": 4,
-  "FRANCISCO BATISTA DE LIMA": 4,
-  "GIESY LAMOUNIER DE OLIVEIRA MACIEL": 4,
-  "JORGE LUIS MARQUES DOS SANTOS": 4
+  "FRANCISCO DE ASSIS PEREIRA JUNIOR":4,
+  "FERNANDO ALVES PESSOA":4,
+  "FRANCISCO BATISTA DE LIMA":4,
+  "GIESY LAMOUNIER DE OLIVEIRA MACIEL":4,
+  "JORGE LUIS MARQUES DOS SANTOS":4,
+  "ANDERSON BARROS VELEZ":4,
+  "ANGELO FLAVIO DA SILVA":4,
+  "HAROLDO QUARESMA GOMES":4,
+  "YAGO ALBINO CRUZ":4,
+  "JOSE LUIS ALVES DE LIMA":4,
+  "ADRIANO PAULO DA SILVA":4,
+  "ANTONIO CESAR PEREIRA ROCHA":4,
+  "IRIALLESON DA SILVA LIMA":4,
+  "JOSE MARIO DE ALEXANDRE SARAIVA":4
 };
   // ✅ ajuste se necessário
   const API = "https://inspecoes.pedro-fillype.workers.dev";
@@ -416,17 +433,65 @@ const META_MENSAL_POR_GESTOR = {
     }
   }
 
+  function setSelectOptions(selectEl, values, placeholder){
+  if (!selectEl) return;
+
+  const current = String(selectEl.value || "");
+  const uniq = [...new Set((values || []).map(v => String(v || "").trim()).filter(Boolean))];
+
+  // ordena
+  uniq.sort((a,b) => a.localeCompare(b, "pt-BR", { sensitivity:"base" }));
+
+  selectEl.innerHTML =
+    `<option value="">${placeholder}</option>` +
+    uniq.map(v => `<option value="${v.replaceAll('"',"&quot;")}">${v}</option>`).join("");
+
+  // tenta manter selecionado
+  if (current && uniq.includes(current)) selectEl.value = current;
+}
+
+async function popularLocalidadeEStatus(){
+  // pega uma amostra grande (sem filtros) só pra montar as listas
+  // (se tiver muitos registros, dá pra limitar no backend depois)
+  const res = await apiFetch(`/nao-conformidades`);
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+
+  if (!res.ok) return;
+
+  const rows = data.results || [];
+
+  const localidades = rows.map(r => r.localidade);
+  const statusList  = rows.map(r => r.status);
+
+  setSelectOptions(
+    document.getElementById("filtroLocalidadeNC"),
+    localidades,
+    "Localidade (todas)"
+  );
+
+  setSelectOptions(
+    document.getElementById("filtroStatusNC"),
+    statusList,
+    "Status (todos)"
+  );
+}
+
   (async function init(){
-    const ok = await garantirLogin();
-    if (!ok) return;
+  const ok = await garantirLogin();
+  if (!ok) return;
 
-    // ✅ deixa mês em branco pra não filtrar sem querer
-const mesEl = document.getElementById("filtroMesNC");
-if (mesEl) mesEl.value = "";
+  const mesEl = document.getElementById("filtroMesNC");
+  if (mesEl) mesEl.value = "";
 
-    await popularGestoresNC();
-    await carregarNC();
-  })();
+  await popularGestoresNC();
+
+  // ✅ popula listas de Localidade e Status
+  await popularLocalidadeEStatus();
+
+  await carregarNC();
+})();
 </script>
 </body>
 </html>
